@@ -2,6 +2,9 @@
 
 A Next.js application demonstrating **secure, on-device cheque data analysis** using Chrome's Built-in AI APIs—**no data leaves the browser**.
 
+🚀 **Live Demo URL**: https://demo-analysis-cheque.vercel.app  
+🏆 Built for the **Google Chrome Built-in AI Challenge 2025**
+
 This README provides setup and testing instructions for tester and developers. For the full problem statement, architecture, and feature details, see:
 
 - 📄 [`HACKATHON_SUBMISSION.md`](HACKATHON_SUBMISSION.md)
