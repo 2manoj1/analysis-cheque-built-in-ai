@@ -65,23 +65,23 @@ All AI runs **locally** using Gemini Nano—no network calls, no API keys.
 ## Core Features
 
 1. **On-Device OCR**  
-   Upload a cheque → AI extracts 11+ fields (amount, IFSC, payee, etc.) using multimodal prompting.
+   Upload a cheque → AI extracts fields (amount, IFSC, payee, etc.) using multimodal prompting.
 
 2. **Smart Form Review**  
-   Edit extracted data with sticky image preview + full-screen viewer (zoom/rotate/pan).
+   Edit extracted data with sheet image preview viewer (zoom/rotate/pan).
 
 3. **Voice + Text Remarks**  
-   Add audio notes or text comments—stored only in session.
+   Add audio notes or text comments remarks for next step analysis.
 
 4. **Forensic AI Analysis**  
-   AI inspects image + data + remarks → generates severity-tagged markdown report:
+   AI inspects image + data + remarks (Text | Audio) → generates severity-tagged markdown report:
 
    - 🔴 **High**: Tampering signs
    - 🟡 **Medium**: Data inconsistencies
    - 🔵 **Low**: Risk assessment & actions
 
 5. **Instant Translation**  
-   Switch report language → AI translates **preserving markdown structure**.
+   Switch report language → AI translates.
 
 ---
 
@@ -103,7 +103,7 @@ All processing happens inside Chrome’s secure sandbox using on-device AI.
 4-Step Wizard
 
 1. **Upload** → Choose image → “Extract & Prefill” (on-device OCR)
-2. **Review** → Edit fields + inspect image
+2. **Review** → Edit fields + preview image
 3. **Remarks** → Add text or voice notes
 4. **Analyze** → Get AI report → Translate if needed
 
