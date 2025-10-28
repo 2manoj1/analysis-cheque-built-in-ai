@@ -17,7 +17,7 @@ This README provides setup and testing instructions for tester and developers. F
 - **Framework**: Next.js (App Router)
 - **Styling**: Tailwind CSS v4
 - **UI Components**: shadcn/ui
-- **AI Engine**: Chrome Built-in AI APIs (`window.LanguageModel` - Gemini Nano)
+- **AI Engine**: Chrome Built-in AI APIs (`LanguageModel` - Gemini Nano)
 - **Node Requirement**: Node.js LTS **22+**
 - **Package Manager**: pnpm
 

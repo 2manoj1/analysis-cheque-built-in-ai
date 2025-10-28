@@ -24,18 +24,18 @@
 - **Framework**: Next.js 15 (App Router) + TypeScript
 - **UI**: Tailwind CSS v4 + shadcn/ui
 - **State**: SWR + Zod-validated session state
-- **AI**: Chrome Built-in AI (Gemini Nano via `window.LanguageModel`, `window.Translator`, `window.LanguageDetector`)
+- **AI**: Chrome Built-in AI (Gemini Nano via `LanguageModel`, `Translator`, `LanguageDetector`)
 - **Media**: Native Web APIs (no external libraries for image/audio)
 
 ---
 
 ## AI APIs Used
 
-| API                       | Purpose                                                  | On-Device? |
-| ------------------------- | -------------------------------------------------------- | ---------- |
-| `window.LanguageModel`    | Extract fields & run forensic analysis from cheque image | ✅         |
-| `window.LanguageDetector` | Auto-detect report language                              | ✅         |
-| `window.Translator`       | Translate analysis into 5 languages                      | ✅         |
+| API                | Purpose                                                  | On-Device? |
+| ------------------ | -------------------------------------------------------- | ---------- |
+| `LanguageModel`    | Extract fields & run forensic analysis from cheque image | ✅         |
+| `LanguageDetector` | Auto-detect report language                              | ✅         |
+| `Translator`       | Translate analysis into 5 languages                      | ✅         |
 
 All AI runs **locally** using Gemini Nano—no network calls, no API keys.
 
