@@ -1,8 +1,11 @@
 # Analysis Cheque Built-in AI
 
-A Next.js application demonstrating secure, on-device cheque data analysis using Chrome's Built-in AI APIs.
+A Next.js application demonstrating **secure, on-device cheque data analysis** using Chrome's Built-in AI APIs—**no data leaves the browser**.
 
-This README provides the necessary setup and execution instructions for developers and judges to quickly test the application locally. For the project's official problem statement, features, and architecture, please refer to the `HACKATHON_SUBMISSION.md` and `ARCHITECTURE.md` files.
+This README provides setup and testing instructions for tester and developers. For the full problem statement, architecture, and feature details, see:
+
+- 📄 [`HACKATHON_SUBMISSION.md`](HACKATHON_SUBMISSION.md)
+- 🏗️ [`ARCHITECTURE.md`](ARCHITECTURE.md)
 
 ---
 
@@ -30,16 +33,18 @@ To run this project, you must have the following installed:
 
 3. **Google Chrome**: **Version 140 or newer** (or a Canary/Dev build) where the Built-in AI APIs are active.
 
-### ⚠️ Testing Requirement for Judges
+### ⚠️ Testing Requirement
 
 The core functionality relies on experimental APIs. If you encounter issues, please ensure the necessary feature flags are enabled in your Chrome browser:
 
 1. Open Chrome and navigate to `chrome://flags`.
 2. Search for flags related to "On-device AI" or "Gemini Nano" and ensure they are set to **Enabled**.
 
+⚠️ These APIs are experimental.
+
 ---
 
-## Getting Started (The `pnpm` Way)
+## Getting Started
 
 The application runs locally on port 3000.
 
@@ -90,6 +95,11 @@ This test verifies the application's core functionality: using on-device AI for 
 4. **Step 2: Review**
    - The app should automatically move to the **"Review"** step (2).
    - The form fields (e.g., Cheque Number, Payee, Amount, IFSC etc) must be accurately populated by the on-device AI.
+   - Verify extracted fields (Cheque No., Payee, Amount, IFSC, etc.)
+   - Edit if needed
+5. **Steps 3–4**: Add remarks → Run AI analysis → Try translation
+
+All processing happens **locally in your browser**—no network calls, no cloud.
 
 ---
 
