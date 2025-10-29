@@ -5,42 +5,20 @@ import * as z from 'zod'
 
 
 export const ChequeFieldsSchema = z.object({
-  bank_name: z.string().describe("Name of the issuing bank (e.g., 'State Bank of India', 'HDFC Bank')"),
-  branch: z.string().describe("Branch name or location (e.g., 'Anna Nagar, Chennai', 'Koramangala Branch')"),
-  cheque_number: z.string().describe("Unique 6-digit cheque number printed on the cheque"),
-  date: z.string()
-    .transform((val) => {
-      // If empty, return empty
-      if (!val || val.trim() === "") return ""
-      
-      // If already in DD-MM-YYYY format, return as is
-      if (/^\d{2}-\d{2}-\d{4}$/.test(val)) return val
-      
-      // Convert DDMMYYYY (e.g., "15032016") to MM-DD-YYYY
-      if (/^\d{8}$/.test(val)) {
-        const day = val.substring(0, 2)
-        const month = val.substring(2, 4)
-        const year = val.substring(4, 8)
-        return `${day}-${month}-${year}`
-      }
-      
-      // Convert DD/MM/YYYY or DD-MM-YYYY
-      if (/^\d{2}[/-]\d{2}[/-]\d{4}$/.test(val)) {
-        const [day, month, year] = val.split(/[/-]/)
-        return `${year}-${month}-${day}`
-      }
-      
-      // Return original if format unknown
-      return val
-    }).describe("Date of issue in DD-MM-YYYY in top right corner format or empty string if not filled"),
-  payee: z.string().describe("Name of the person or entity to whom payment is made ('Pay to the order of')"),
-  amount_numeric: z.string().describe("Payment amount in numeric format (e.g., '50000.00', '1,25,000')"),
-  amount_words: z.string().describe("Payment amount written in words (e.g., 'Fifty Thousand Rupees Only')"),
-  account_number: z.string().describe("Bank account number of the cheque issuer (typically 9-18 digits)"),
-  ifsc: z.string().describe("Indian Financial System Code - 11 character alphanumeric code (e.g., 'SBIN0001234')"),
-  micr: z.string().describe("Magnetic Ink Character Recognition code - 9 digit code for cheque processing"),
-  notes_visible_marks: z.string().describe("Any visible alterations, erasures, overwriting, or suspicious marks observed on the cheque. If not return empty string"),
-})
+  bank_name: z.string().nullish().default("").describe("Name of the issuing bank in English "),
+  branch: z.string().nullish().default("").describe("Bank Branch name address in English"),
+  cheque_number: z.string().nullish().default("").describe("Unique 6-digit cheque number printed on the cheque with MICR 1st part"),
+  date: z.iso.date().nullish().default("").describe("Date of issue in DD-MM-YYYY in top right corner format or empty string if not found"),
+  payee: z.string().nullish().default("").describe("Name of the person or entity to whom payment is made ('Pay to the order of')"),
+  amount_numeric: z.string().nullish().default("").describe("Payment amount in numeric format - would be hand wrriten, double check (e.g., '50000.00', '1,25,000')"),
+  amount_words: z.string().nullish().default("").describe("Payment amount written in words - ould be hand wrriten, double check (e.g., 'Fifty Thousand Rupees Only')"),
+  account_number: z.string().nullish().default("").describe("Bank account number of the cheque issuer (typically 9-18 digits)"),
+  ifsc: z.string().nullish().default("").describe("IFSC Code - 11 character alphanumeric code, you will find in cheque header below bank and branch details"),
+  micr: z.string().nullish().default("").describe("Magnetic Ink Character Recognition code (MICR Code) - Numeric code for cheque processing in footer of cheque"),
+  notes_visible_marks: z.string().nullish().default("").describe("Any visible alterations, erasures, overwriting, or suspicious marks observed on the cheque."),
+});
+
+export const ChequeFieldsJSONSchema = z.toJSONSchema(ChequeFieldsSchema);
 
 export type ChequeFields = z.infer<typeof ChequeFieldsSchema>;
 
