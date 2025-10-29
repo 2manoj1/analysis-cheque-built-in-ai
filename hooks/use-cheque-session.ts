@@ -5,14 +5,14 @@ import * as z from 'zod'
 
 
 export const ChequeFieldsSchema = z.object({
-  bank_name: z.string().nullish().default("").describe("Name of the issuing bank in English "),
+  bank_name: z.string().nullish().default("").describe("Name of the bank in English only in top of cheque. No Local language"),
   branch: z.string().nullish().default("").describe("Bank Branch name address in English"),
-  cheque_number: z.string().nullish().default("").describe("Unique 6-digit cheque number printed on the cheque with MICR 1st part"),
+  account_number: z.string().nullish().default("").describe("Account number (A/C) of the issuer - A/C No. or A/C, Dedecated section for A/C"),
+  cheque_number: z.string().nullish().default("").describe("Unique cheque number printed on the cheque with MICR Ink in bootom or footer"),
   date: z.iso.date().nullish().default("").describe("Date of issue in DD-MM-YYYY in top right corner format or empty string if not found"),
   payee: z.string().nullish().default("").describe("Name of the person or entity to whom payment is made ('Pay to the order of')"),
   amount_numeric: z.string().nullish().default("").describe("Payment amount in numeric format - would be hand wrriten, double check (e.g., '50000.00', '1,25,000')"),
   amount_words: z.string().nullish().default("").describe("Payment amount written in words - ould be hand wrriten, double check (e.g., 'Fifty Thousand Rupees Only')"),
-  account_number: z.string().nullish().default("").describe("Bank account number of the cheque issuer (typically 9-18 digits)"),
   ifsc: z.string().nullish().default("").describe("IFSC Code - 11 character alphanumeric code, you will find in cheque header below bank and branch details"),
   micr: z.string().nullish().default("").describe("Magnetic Ink Character Recognition code (MICR Code) - Numeric code for cheque processing in footer of cheque"),
   notes_visible_marks: z.string().nullish().default("").describe("Any visible alterations, erasures, overwriting, or suspicious marks observed on the cheque."),
