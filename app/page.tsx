@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { ChequeUploader } from "@/components/cheque-uploader";
 import { ChequeForm } from "@/components/cheque-form";
 import { RemarksAudio } from "@/components/remarks-audio";
-import { AnalysisPanel } from "@/components/analysis-panel";
+import { AnalysisPanel1 } from "@/components/analysis-sec";
 import { useChequeSession } from "@/hooks/use-cheque-session";
 import { isPromptAvailable } from "@/lib/prompt";
 
@@ -118,7 +118,7 @@ export default function Page() {
 								)}
 								{stepIndex === 1 && <ChequeForm />}
 								{stepIndex === 2 && <RemarksAudio />}
-								{stepIndex === 3 && <AnalysisPanel />}
+								{stepIndex === 3 && <AnalysisPanel1 />}
 							</section>
 
 							<Separator />
