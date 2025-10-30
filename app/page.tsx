@@ -11,6 +11,7 @@ import { RemarksAudio } from "@/components/remarks-audio";
 import { AnalysisPanel } from "@/components/analysis-panel";
 import { useChequeSession } from "@/hooks/use-cheque-session";
 import { isPromptAvailable } from "@/lib/prompt";
+import { Logo } from "@/components/Logo";
 
 const steps = [
 	{ key: "upload", title: "Upload", subtitle: "Cheque front image" },
@@ -53,48 +54,85 @@ export default function Page() {
 	};
 
 	return (
-		<main className="min-h-screen bg-background text-foreground">
-			<div className="mx-auto max-w-5xl px-6 py-8">
-				<header className="mb-6">
-					<h1 className="text-2xl md:text-3xl font-semibold text-balance">
-						Cheque Review & Visual Analysis
-					</h1>
-					<p className="text-sm text-muted-foreground mt-1">
-						Offline-first, on-device analysis using Chrome Built In AI API.
-					</p>
-				</header>
+		<main className="min-h-screen bg-background text-foreground flex flex-col">
+			{/* Full-width glassy app header (minimal: icon + name + badge) */}
+			<header className="w-full bg-white/4 backdrop-blur-md border-b border-white/8 shadow-sm">
+				<div className="mx-auto w-full max-w-5xl px-6 py-4 flex items-center gap-4">
+					<span
+						className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-transparent shadow-sm ring-1 ring-white/6"
+						aria-hidden="true"
+					>
+						<Logo className="w-14 h-14" />
+					</span>
 
+					<div className="flex items-center gap-3">
+						<h1 className="text-lg md:text-xl font-semibold tracking-tight">
+							ChequeAI
+						</h1>
+						<span className="text-[11px] font-semibold uppercase px-2 py-1 rounded-full bg-white/6 text-muted-foreground">
+							Beta
+						</span>
+					</div>
+				</div>
+			</header>
+
+			{/* Centered page content container (fluid header above, content aligned center) */}
+			<div className="mx-auto w-full max-w-5xl px-6 py-4 flex-1">
+				{/* Sub-header (separate from app header) */}
+				<div className="mb-6">
+					<h2 className="text-2xl md:text-3xl font-semibold">
+						Cheque Review & Visual Analysis
+					</h2>
+					<p className="text-sm text-muted-foreground mt-2 max-w-xl">
+						Fast, private cheque intelligence — on‑device AI that keeps your data
+						local.
+					</p>
+				</div>
+
+				{/* Main content */}
 				{!apiAvailable ? (
-					<Card className="p-4 md:p-6 bg-card text-card-foreground">
+					<Card className="w-full p-4 md:p-6 bg-card text-card-foreground">
 						<div className="flex justify-center">
 							<Button onClick={showInstructions}>Enable Chrome API</Button>
 						</div>
 					</Card>
 				) : (
-					<Card className="p-4 md:p-6 bg-card text-card-foreground">
+					<Card className="w-full p-4 md:p-6 bg-card text-card-foreground">
 						<div className="flex flex-col gap-4">
 							<nav
 								aria-label="Progress"
-								className="grid grid-cols-1 md:grid-cols-4 gap-3">
+								className="grid grid-cols-1 md:grid-cols-4 gap-3"
+							>
 								{steps.map((s, i) => {
 									const active = i === stepIndex;
 									const completed = i < stepIndex;
 									return (
 										<div
 											key={s.key}
-											className={`rounded-md border p-3 transition-colors ${
+											className={`w-full rounded-md border p-3 transition-colors ${
 												active
 													? "bg-primary text-primary-foreground"
 													: "bg-secondary text-secondary-foreground"
-											}`}>
+											}`}
+										>
 											<div className="flex items-center justify-between">
 												<span className="text-sm font-medium">{s.title}</span>
 												{completed ? (
-													<Badge variant={active ? "secondary" : "default"}>
+													<Badge
+														className="w-14 text-center"
+														variant={
+															active ? "secondary" : "default"
+														}
+													>
 														Done
 													</Badge>
 												) : (
-													<Badge variant={active ? "secondary" : "outline"}>
+													<Badge
+														className="w-8 text-center"
+														variant={
+															active ? "secondary" : "outline"
+														}
+													>
 														{i + 1}
 													</Badge>
 												)}
@@ -102,7 +140,8 @@ export default function Page() {
 											<p
 												className={`text-xs mt-1 ${
 													active ? "opacity-90" : "text-muted-foreground"
-												}`}>
+												}`}
+											>
 												{s.subtitle}
 											</p>
 										</div>
@@ -127,7 +166,8 @@ export default function Page() {
 								<Button
 									variant="outline"
 									onClick={() => setStepIndex((i) => Math.max(0, i - 1))}
-									disabled={stepIndex === 0}>
+									disabled={stepIndex === 0}
+								>
 									Back
 								</Button>
 
@@ -137,7 +177,8 @@ export default function Page() {
 											onClick={() =>
 												setStepIndex((i) => Math.min(steps.length - 1, i + 1))
 											}
-											disabled={!canNext}>
+											disabled={!canNext}
+										>
 											Next
 										</Button>
 									) : (
@@ -151,6 +192,13 @@ export default function Page() {
 					</Card>
 				)}
 			</div>
+			<footer className="mt-8 border-t pt-4">
+				<div className="mx-auto max-w-5xl px-6 text-center text-sm text-muted-foreground">
+					<span>© {new Date().getFullYear()} ChequeAI</span>
+					<span className="mx-2">•</span>
+					<span>Offline-first, on-device analysis</span>
+				</div>
+			</footer>
 		</main>
 	);
 }

@@ -5,9 +5,11 @@ import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-	title: "Analysis Cheque Built-in AI",
+	title: "ChequeAI: Analysis Cheque",
 	description:
-		"A application demonstrating secure, on-device cheque data analysis using Chrome's Built-in AI APIs",
+		"A comprehensive application demonstrating secure, on-device cheque data analysis using Chrome's Built-in AI APIs.",
+	keywords: "cheque, analysis, AI, secure, on-device",
+	themeColor: "#ffffff",
 };
 
 export default function RootLayout({
