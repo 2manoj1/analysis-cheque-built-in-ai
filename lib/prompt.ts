@@ -95,7 +95,7 @@ export async function analyzeCheque(
 	edited: Partial<ChequeFields>,
 	remarks: string,
 	audio?: Blob
-): Promise<{ markdown: string; severity: string }> {
+): Promise<{ markdown: string; }> {
 	if (!LanguageModel) throw new Error("Prompt API unavailable");
 
 	const expectedInputs: Array<{ type: "text" | "image" | "audio" }> = [
@@ -113,8 +113,7 @@ export async function analyzeCheque(
 				content: [
 					"You are a highly skilled forensic cheque examiner, tasked with performing a detailed analysis of cheque images and given data.",
 					"Focus your analysis on the following aspects of the cheque: date, amount, payee name, alterations, handwriting inconsistencies, signature verification, ink matching, and potential tampering such as overwriting, scraping, or erasure.",
-					"Provide a comprehensive analysis with clear Markdown sections: ### Summary, ### Visual Indicators, ### Data Consistency, ### Risk Assessment, and ### Suggested Actions.",
-					"For each section, evaluate and assign severity levels as follows: 'High' for any significant findings in Visual Indicators, 'Medium' for minor discrepancies in Data Consistency, and 'Low' for the remaining sections (Summary, Risk Assessment, Suggested Actions).",
+					"Provide a comprehensive analysis with clear Markdown sections: ### Visual Indicators, ### Data Consistency, ### Risk Assessment, and ### Suggested Actions.",
 					"Ensure your response is clear and professional, indicating if further forensic analysis or verification is needed.",
 				].join("\n"),
 			},
@@ -162,21 +161,16 @@ export async function analyzeCheque(
 		},
 	]);
 
-	// Extract severity from the markdown (using the original logic)
-	const severityMatch = md.match(/Severity:\s*(High|Medium|Low)/i);
-	const severity = severityMatch ? severityMatch[1] : "Medium";
 
-	return { markdown: md, severity };
+	return { markdown: md };
 }
 
-// CRITICAL FIX: The function must now return an object { translatedMarkdown: string, severity: string }
+// CRITICAL FIX: The function must now return an object { translatedMarkdown: string }
 export async function translate(
 	md: string,
-	targetLanguage: string,
-	originalSeverity: string
-): Promise<{ translatedMarkdown: string; severity: string }> {
+	targetLanguage: string
+): Promise<{ translatedMarkdown: string; }> {
 	let translatedText = md.trim();
-	let severity = originalSeverity || "Medium"; // Use the provided severity
 
 	try {
 		// Check if the language detection and translator APIs are available
@@ -216,16 +210,48 @@ export async function translate(
 		}
 
 		// FIX: Return the expected object structure
-		return { translatedMarkdown: translatedText, severity: severity };
+		return { translatedMarkdown: translatedText };
 	} catch (err) {
 		console.error(err);
 		// Ensure a valid object is returned even on error
-		return { translatedMarkdown: md.trim(), severity: severity };
+		return { translatedMarkdown: md.trim() };
 	}
 }
 
 export async function summarizeMarkdown(md: string): Promise<string> {
-	// ... (rest of summarizeMarkdown remains the same)
-	// ... (omitted for brevity)
-	return md;
+	// Check if Summarizer API is available
+	if (!('Summarizer' in self)) {
+		throw new Error('Chrome Summarizer API not available. Please use Chrome 138+ with AI features enabled.');
+	}
+
+	try {
+		// Check API availability
+		const availability = await Summarizer.availability();
+		if (availability === 'unavailable') {
+			throw new Error('Summarizer API is not available on this device.');
+		}
+
+		// Create summarizer instance with monitoring for download progress
+		const summarizer = await Summarizer.create({
+			type: 'teaser',
+			format: 'plain-text',
+			length: 'long',
+			monitor(m: any) {
+				m.addEventListener('downloadprogress', (e: any) => {
+					console.log(`Summarizer model downloaded ${e.loaded * 100}%`);
+				});
+			}
+		});
+
+		// Generate summary
+		const summary = await summarizer.summarize(md, {context: 'This summary is intended for an Indian banker audience.',});
+		
+		// Clean up
+		summarizer.destroy();
+
+		return summary;
+	} catch (error: any) {
+		console.error('Summarization error:', error);
+		return md; // Fallback to original markdown on error
+	}
 }
