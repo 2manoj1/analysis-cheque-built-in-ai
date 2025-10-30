@@ -1,201 +1,116 @@
 "use client";
 
-import { JSX, useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useChequeSession } from "@/hooks/use-cheque-session";
-import { analyzeCheque, isPromptAvailable, translate } from "@/lib/prompt";
+import { analyzeCheque, isPromptAvailable, translate, summarizeMarkdown } from "@/lib/prompt";
 import {
-	AlertTriangle,
-	XCircle,
-	FileWarning,
-	LucideIcon,
 	Languages,
+	Sparkles,
+	Loader2,
 } from "lucide-react";
 
-// Define the structure for a risk issue
-export type RiskIssue = {
-	id: number;
-	title: string;
-	description: string;
-	severity: "High" | "Medium" | "Low";
-};
-
-// --- Helper Functions (getRiskStyles, RiskIssueCard, CustomHeading) ---
-
-const getRiskStyles = (
-	severity: RiskIssue["severity"]
-): {
-	icon: LucideIcon;
-	color: string;
-	borderColor: string;
-	bgClass: string;
-} => {
-	switch (severity) {
-		case "High":
-			return {
-				icon: XCircle,
-				color: "text-red-600",
-				borderColor: "border-red-400",
-				bgClass: "bg-red-50/50",
-			};
-		case "Medium":
-			return {
-				icon: AlertTriangle,
-				color: "text-yellow-600",
-				borderColor: "border-yellow-400",
-				bgClass: "bg-yellow-50/50",
-			};
-		case "Low":
-			return {
-				icon: FileWarning,
-				color: "text-blue-600",
-				borderColor: "border-blue-400",
-				bgClass: "bg-blue-50/50",
-			};
-		default:
-			return {
-				icon: FileWarning,
-				color: "text-gray-500",
-				borderColor: "border-gray-300",
-				bgClass: "bg-gray-50",
-			};
-	}
-};
-
-// Component to display each risk clearly
-const RiskIssueCard = ({ title, description, severity }: RiskIssue) => {
-	const { icon: Icon, color, borderColor, bgClass } = getRiskStyles(severity);
-
-	return (
-		<Card
-			className={`p-4 border-l-4 ${borderColor} ${bgClass} flex gap-4 items-start shadow-sm`}>
-			<div
-				className={`p-2 rounded-full ${color} bg-white border border-dashed`}>
-				<Icon className="w-5 h-5" />
-			</div>
-			<div className="flex-1">
-				<div className="flex justify-between items-center mb-1">
-					<h4 className="font-semibold text-base">{title}</h4>
-					<span
-						className={`text-xs font-medium px-2 py-0.5 rounded-full ${color} border ${borderColor}`}>
-						{severity}
-					</span>
-				</div>
-				<div className="prose prose-sm max-w-none">
-					<ReactMarkdown
-						components={{
-							p: ({ node, ...props }) => (
-								<p className="text-sm text-muted-foreground" {...props} />
-							),
-						}}>
-						{description}
-					</ReactMarkdown>
-				</div>
-			</div>
-		</Card>
-	);
-};
-
-// Custom heading component (kept for stability)
-const CustomHeading = ({
-	level,
-	children,
-}: {
-	level: number;
-	children?: React.ReactNode;
-}) => {
-	const Tag = `h${level}` as keyof JSX.IntrinsicElements;
-	return <Tag className="custom-heading">{children}</Tag>;
-};
-
 // --- Language Configuration ---
-
 const SUPPORTED_LANGUAGES = [
 	{ code: "en", name: "English" },
-	{ code: "es", name: "Spanish" },
-	{ code: "fr", name: "French" },
-	{ code: "de", name: "German" },
-	{ code: "ja", name: "Japanese" },
+	{ code: "hi", name: "हिन्दी (Hindi)" },
+	{ code: "bn", name: "বাংলা (Bengali)" },
+	{ code: "ta", name: "தமிழ் (Tamil)" },
+	{ code: "kn", name: "ಕನ್ನಡ (Kannada)" },
+	{ code: "mr", name: "मराठी (Marathi)" },
 ];
 
-// --- AnalysisPanel Component ---
+// Function to generate summary from full markdown
+async function generateSummary(markdown: string): Promise<string> {
+	const summary = await summarizeMarkdown(markdown);
+	return summary ?? "No summary available.";
+}
 
+// --- AnalysisPanel Component ---
 export function AnalysisPanel() {
 	const { data: session, update } = useChequeSession();
 	const [busy, setBusy] = useState(false);
 	const [selectedLanguage, setSelectedLanguage] = useState("en");
-	const [fullTranslatedReport, setFullTranslatedReport] = useState("");
+	const [englishSummary, setEnglishSummary] = useState("");
+	const [translatedSummary, setTranslatedSummary] = useState("");
+	const [showSummary, setShowSummary] = useState(false);
+	const [summaryLoading, setSummaryLoading] = useState(false);
+	const [translateLoading, setTranslateLoading] = useState(false);
 
-	// Memoized function for translation using useCallback for stability
-	const translateAndSaveReport = useCallback(
-		async (markdown: string, targetLanguage: string, severity: string) => {
-			if (!markdown) return setFullTranslatedReport("");
+	// Generate English summary from full markdown
+	const handleGenerateSummary = async () => {
+		if (!session?.analysisMarkdown) {
+			alert("No analysis report available. Please run analysis first.");
+			return;
+		}
 
-			try {
-				// FIX: Destructure the object returned by translate() to get the string
-				const { translatedMarkdown } = await translate(
-					markdown,
-					targetLanguage,
-					severity
-				);
+		try {
+			setSummaryLoading(true);
+			const summary = await generateSummary(session.analysisMarkdown);
+			setEnglishSummary(summary);
+			setTranslatedSummary(summary); // Default to English
+			setShowSummary(true);
+			setSelectedLanguage("en"); // Reset to English
+		} catch (e: any) {
+			alert(`Error generating summary: ${e?.message || "unknown error"}`);
+			console.error("Summary generation error:", e);
+		} finally {
+			setSummaryLoading(false);
+		}
+	};
 
-				setFullTranslatedReport(translatedMarkdown);
-			} catch (e: any) {
-				if (e.message.includes("user gesture")) {
-					setFullTranslatedReport(
-						"Error: Translation components require a new user click (e.g., Run Analysis or change language) to finish downloading."
-					);
-				} else {
-					setFullTranslatedReport(
-						`Error: Could not process translation. ${
-							e?.message || "unknown error"
-						}`
-					);
-				}
-				console.error("Error during translation:", e);
+	// Translate the English summary to selected language
+	const handleTranslateSummary = async (targetLanguage: string) => {
+		if (!englishSummary) {
+			alert("Please generate summary first.");
+			return;
+		}
+
+		if (targetLanguage === "en") {
+			setTranslatedSummary(englishSummary);
+			return;
+		}
+
+		try {
+			setTranslateLoading(true);
+			const { translatedMarkdown } = await translate(
+				englishSummary,
+				targetLanguage
+			);
+			setTranslatedSummary(translatedMarkdown);
+		} catch (e: any) {
+			if (e.message.includes("user gesture")) {
+				alert("Translation requires a user action. Please try again.");
+			} else {
+				alert(`Translation error: ${e?.message || "unknown error"}`);
 			}
-		},
-		[]
-	);
+			console.error("Translation error:", e);
+		} finally {
+			setTranslateLoading(false);
+		}
+	};
 
-	// Language Dropdown Change Handler
+	// Language change handler
 	const handleLanguageChange = async (
 		e: React.ChangeEvent<HTMLSelectElement>
 	) => {
 		const newLanguage = e.target.value;
 		setSelectedLanguage(newLanguage);
-
-		if (session?.analysisMarkdown) {
-			setBusy(true);
-			await translateAndSaveReport(
-				session.analysisMarkdown,
-				newLanguage,
-				session.severity || "Medium"
-			);
-			setBusy(false);
-		} else {
-			setFullTranslatedReport("");
+		
+		if (englishSummary) {
+			await handleTranslateSummary(newLanguage);
 		}
 	};
 
-	// Initial load/analysis update effect
+
+	// Cleanup speech on unmount
 	useEffect(() => {
-		if (session?.analysisMarkdown && fullTranslatedReport === "") {
-			translateAndSaveReport(
-				session.analysisMarkdown,
-				selectedLanguage,
-				session.severity || "Medium"
-			);
-		}
-	}, [
-		session?.analysisMarkdown,
-		session?.severity,
-		selectedLanguage,
-		translateAndSaveReport,
-		fullTranslatedReport,
-	]);
+		return () => {
+			window.speechSynthesis.cancel();
+		};
+	}, []);
 
 	const onAnalyze = async () => {
 		const ok = await isPromptAvailable();
@@ -212,12 +127,17 @@ export function AnalysisPanel() {
 
 		try {
 			setBusy(true);
+			// Reset summary when running new analysis
+			setEnglishSummary("");
+			setTranslatedSummary("");
+			setShowSummary(false);
+			
 			const imgBlob = await (await fetch(session.imageDataUrl)).blob();
 			const audioBlob = session.audioDataUrl
 				? await (await fetch(session.audioDataUrl)).blob()
 				: undefined;
 
-			const { markdown, severity } = await analyzeCheque(
+			const { markdown } = await analyzeCheque(
 				imgBlob,
 				session.edited,
 				session.remarks || "",
@@ -228,172 +148,120 @@ export function AnalysisPanel() {
 				throw new Error("Expected markdown to be a string");
 			}
 
-			await translateAndSaveReport(markdown, selectedLanguage, severity);
-			await update({ analysisMarkdown: markdown, severity: severity });
+			await update({ analysisMarkdown: markdown });
 		} catch (e: any) {
-			await update({
-				analysisMarkdown: `Error: ${e?.message || "unable to analyze"}`,
-			});
-			setFullTranslatedReport(`Error: ${e?.message || "unable to analyze"}`);
+			const errorMsg = `Error: ${e?.message || "unable to analyze"}`;
+			await update({ analysisMarkdown: errorMsg });
 		} finally {
 			setBusy(false);
 		}
 	};
 
-	// Function to parse the translated markdown and extract categories
-	const parseMarkdownToCategories = (
-		markdown: string,
-		sessionSeverity: string
-	): RiskIssue[] => {
-		if (typeof markdown !== "string") {
-			console.error("Expected markdown to be a string for parsing");
-			return [];
-		}
-
-		// Split aggressively by two newlines to separate the main sections (the safest way after translation)
-		const sections = markdown.split(/\n\n+/);
-		const risks: RiskIssue[] = [];
-
-		// Helper to assign severity based on translated keyword
-		const getSectionSeverity = (title: string): RiskIssue["severity"] => {
-			const lowerTitle = title.toLowerCase();
-
-			// Match keywords in any language to infer severity based on the section content type
-			if (
-				lowerTitle.includes("visual") ||
-				lowerTitle.includes("visuels") ||
-				lowerTitle.includes("indicators")
-			)
-				return "High";
-			if (
-				lowerTitle.includes("data") ||
-				lowerTitle.includes("datos") ||
-				lowerTitle.includes("données") ||
-				lowerTitle.includes("consistency")
-			)
-				return "Medium";
-			if (
-				lowerTitle.includes("risk") ||
-				lowerTitle.includes("riesgo") ||
-				lowerTitle.includes("risque")
-			)
-				return "Medium";
-
-			return "Low";
-		};
-
-		sections.forEach((section, index) => {
-			const cleanSection = section.trim();
-			if (cleanSection.length === 0) return;
-
-			// Use a regex to find the FIRST line that starts with ### (Markdown H3)
-			// This regex is highly tolerant of leading whitespace/tabs before the hashes.
-			const headerMatch = cleanSection.match(/^(\s*#+[\s\t]*)(.*)/);
-
-			if (headerMatch && headerMatch[1].trim().startsWith("###")) {
-				// Specifically target H3
-				const titleWithHashes = headerMatch[0].trim(); // e.g., "### Summary"
-				const title = headerMatch[2].trim(); // e.g., "Summary" or "Resumen"
-
-				// Extract description: find the start of the description by slicing after the matched header line
-				const description = cleanSection
-					.substring(titleWithHashes.length)
-					.trim();
-
-				if (title.length > 0) {
-					risks.push({
-						id: risks.length,
-						title: title,
-						description: description,
-						severity: getSectionSeverity(title),
-					});
-				}
-			}
-		});
-
-		// Fallback if structured parsing still failed, ensuring *something* shows up
-		if (risks.length === 0 && markdown.length > 50) {
-			risks.push({
-				id: 0,
-				title: `Full Analysis Report (Unstructured - Manual Review Required)`,
-				description: markdown.trim(),
-				severity: sessionSeverity as RiskIssue["severity"],
-			});
-		}
-
-		return risks;
-	};
-
-	// Use useMemo to parse the FULL TRANSLATED REPORT into cards
-	const risks = useMemo(() => {
-		return fullTranslatedReport
-			? parseMarkdownToCategories(
-					fullTranslatedReport,
-					session?.severity || "Medium"
-			  )
-			: [];
-	}, [fullTranslatedReport, session?.severity]);
-
 	return (
-		<Card className="p-4 bg-card text-card-foreground">
-			<div className="grid gap-6">
+		<Card className="p-6 bg-card text-card-foreground">
+			<div className="space-y-6">
+				{/* Header */}
 				<div className="flex items-center justify-between">
 					<div>
-						<h2 className="text-lg font-medium">
+						<h2 className="text-xl font-semibold">
 							Cheque Review & Visual Analysis
 						</h2>
-						<p className="text-sm text-muted-foreground">
+						<p className="text-sm text-muted-foreground mt-1">
 							Combines cheque image + updated fields + banker remarks
 							(on-device).
 						</p>
 					</div>
 					<Button onClick={onAnalyze} disabled={busy}>
-						{busy ? "Analyzing..." : "Run Analysis"}
+						{busy ? (
+							<>
+								<Loader2 className="w-4 h-4 mr-2 animate-spin" />
+								Analyzing...
+							</>
+						) : (
+							"Run Analysis"
+						)}
 					</Button>
 				</div>
 
-				{/* Language Selection Dropdown */}
-				<div className="flex items-center justify-between">
-					<div className="flex items-center gap-2">
-						<Languages className="w-4 h-4 text-muted-foreground" />
-						<label htmlFor="language-select" className="text-sm font-medium">
-							Report Language:
-						</label>
-					</div>
-					<select
-						id="language-select"
-						value={selectedLanguage}
-						onChange={handleLanguageChange}
-						className="p-2 border rounded-md shadow-sm text-sm"
-						disabled={busy}>
-						{SUPPORTED_LANGUAGES.map((lang) => (
-							<option key={lang.code} value={lang.code}>
-								{lang.name}
-							</option>
-						))}
-					</select>
-				</div>
-
-				{/* Detailed Risk Indicators (Renders based on translated content) */}
-				{risks.length > 0 && (
-					<section className="bg-secondary rounded-md p-4 border">
-						<h3 className="font-semibold text-xl mb-4">
-							Full Analysis Report (
-							{
-								SUPPORTED_LANGUAGES.find((l) => l.code === selectedLanguage)
-									?.name
-							}
-							)
-						</h3>
-						<div className="grid gap-3">
-							{risks.map((risk) => (
-								<RiskIssueCard key={risk.id} {...risk} />
-							))}
+				{/* Full Analysis Report */}
+				{session?.analysisMarkdown && (
+					<section className="space-y-4">
+						<div className="flex items-center justify-between">
+							<h3 className="text-lg font-semibold">Full Analysis Report</h3>
+							<Button
+								onClick={handleGenerateSummary}
+								disabled={summaryLoading}
+								variant="outline"
+								size="sm">
+								{summaryLoading ? (
+									<>
+										<Loader2 className="w-4 h-4 mr-2 animate-spin" />
+										Generating...
+									</>
+								) : (
+									<>
+										<Sparkles className="w-4 h-4 mr-2" />
+										Generate Summary
+									</>
+								)}
+							</Button>
 						</div>
-						<p className="text-xs text-muted-foreground mt-4 italic">
-							This report is generated via **on-device language model analysis**
-							and **on-device translation**. Each card represents a section from
-							the full report.
+						
+						<div className="bg-secondary/30 rounded-lg p-6 border">
+							<article className="prose prose-sm prose-slate max-w-none dark:prose-invert">
+								<ReactMarkdown>{session.analysisMarkdown}</ReactMarkdown>
+							</article>
+						</div>
+						
+						<p className="text-xs text-muted-foreground italic">
+							Generated via on-device language model analysis
+						</p>
+					</section>
+				)}
+
+				{/* Summary Section */}
+				{showSummary && englishSummary && (
+					<section className="space-y-4">
+						<div className="flex items-center justify-between">
+							<h3 className="text-lg font-semibold">Summary</h3>
+							<div className="flex items-center gap-3">
+								{/* Language Selection */}
+								<div className="flex items-center gap-2">
+									<Languages className="w-4 h-4 text-muted-foreground" />
+									<select
+										id="language-select"
+										value={selectedLanguage}
+										onChange={handleLanguageChange}
+										className="p-2 border rounded-md shadow-sm text-sm bg-background"
+										disabled={translateLoading}>
+										{SUPPORTED_LANGUAGES.map((lang) => (
+											<option key={lang.code} value={lang.code}>
+												{lang.name}
+											</option>
+										))}
+									</select>
+								</div>
+							</div>
+						</div>
+
+						<div className="bg-blue-50 dark:bg-blue-950/20 rounded-lg p-6 border border-blue-200 dark:border-blue-800">
+							{translateLoading ? (
+								<div className="flex items-center justify-center py-8">
+									<Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+									<span className="ml-2 text-sm text-muted-foreground">
+										Translating to{" "}
+										{SUPPORTED_LANGUAGES.find(l => l.code === selectedLanguage)?.name}...
+									</span>
+								</div>
+							) : (
+								<article className="prose prose-sm prose-slate max-w-none dark:prose-invert">
+									<ReactMarkdown>{translatedSummary}</ReactMarkdown>
+								</article>
+							)}
+						</div>
+
+						<p className="text-xs text-muted-foreground italic">
+							Summary generated and translated via on-device AI
 						</p>
 					</section>
 				)}
